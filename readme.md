@@ -140,7 +140,7 @@ este devolvera un "hola" junto al parametro enviado, mostrado de la siguiente fo
 
 ### Forma Personalizada
 
-![predeterminado](/src/resources/personalizado.png)
+![personalizado](/src/resources/personalizado.png)
 
 ## Referencias
 
