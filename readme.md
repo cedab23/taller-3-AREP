@@ -125,6 +125,23 @@ datos, no obstante, esto se realizara a futuro en la entrega final, mientras tan
 
 ![nuevos cambios](/src/resources/nuevos%20cambios.png)
 
+ahora contiene un nuevo endpoint llamado "/greeting", el cual posee la cualidad de devolver un saludo, siendo el 
+tipico "hola mundo", no obstante, en caso de devolverle un parametro de la siguiente forma:
+
+```
+http://localhost:5000/greeting?name=<parametro>
+```
+
+este devolvera un "hola" junto al parametro enviado, mostrado de la siguiente forma:
+
+### Forma Predeterminada
+
+![predeterminado](/src/resources/predeterminado.png)
+
+### Forma Personalizada
+
+![predeterminado](/src/resources/personalizado.png)
+
 ## Referencias
 
 La imagen y video utilizados no son de autoria propia, si no que se tomaron de 'netkeiba', una pagina especializada en las carreras de caballos de japon.

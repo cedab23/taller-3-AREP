@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.io.*;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -77,15 +79,59 @@ public class ArimaKinen {
             System.exit(1);
         }
 
+        Class<?> controllerClass = Saludo.class;
+        if (controllerClass.isAnnotationPresent(RestController.class)) {
+            final Object controllerInstance;
+            try {
+                controllerInstance = controllerClass.getDeclaredConstructor().newInstance();
+                System.out.println("GreetingController registrado exitosamente");
+            } catch (Exception e) {
+                System.err.println("Error instanciando GreetingController: " + e.getMessage());
+                throw new RuntimeException(e);
+            }
+            for (Method method : controllerClass.getDeclaredMethods()) {
+                GetMapping getMappingAnnotation = method.getAnnotation(GetMapping.class);
+                if (getMappingAnnotation != null) {
+                    String path = getMappingAnnotation.value(); // "/greeting" endpoint
+                    System.out.println("Router registry: " + path + " -> " + method.getName());
+
+                    get(path, (req, res) -> {
+                        try {
+                            Parameter[] parameters = method.getParameters();
+                            Object[] methodArgs = new Object[parameters.length];
+
+                            for (int i = 0; i < parameters.length; i++) {
+                                RequestParam requestParam = parameters[i].getAnnotation(RequestParam.class);
+                                if (requestParam != null) {
+                                    String paramValue = req.params.getOrDefault(requestParam.value(),
+                                            requestParam.defaultValue());
+                                    methodArgs[i] = paramValue;
+                                    System.out.println("Param: " + requestParam.value() + " = " + paramValue);
+                                } else {
+                                    methodArgs[i] = null;
+                                }
+                            }
+                            Object result = method.invoke(controllerInstance, methodArgs);
+                            res.send(200, "OK", "text/plain", result.toString().getBytes());
+                        } catch (Exception e) {
+                            System.err.println("Error invocando " + method.getName() + ": " + e.getMessage());
+                            res.send(500, "Internal Server Error", "text/plain",
+                                    ("Error: " + e.getMessage()).getBytes());
+                        }
+                    });
+                }
+            }
+        }
+
         /**
-         * Lambda endpoint for refresh table of horses 
+         * Lambda endpoint for refresh table of horses
          * that will participate on arima kinen
          */
-
         get("/api/table", (req, res) -> {
             String json = horsesToJson(racers);
             res.send(200, "OK", "application/json", json.getBytes());
         });
+
         while (running) {
             try {
                 System.out.println("Listo para recibir ...");
@@ -105,7 +151,7 @@ public class ArimaKinen {
                         String[] requestParts = inputLine.split(" ");
                         method = requestParts[0]; // <-- Aquí obtienes el método
                         requestUri = new URI(requestParts[1]);
-                        path = requestParts[1];
+                        path = requestUri.getPath();
                         System.out.println("Method: " + method + " | Path: " + path);
                         firstLine = false;
                     }
@@ -160,7 +206,7 @@ public class ArimaKinen {
                 out.close();
                 in.close();
             } catch (IOException e) {
-                System.err.println("Accept failed: "+e.getMessage());
+                System.err.println("Accept failed: " + e.getMessage());
                 System.exit(1);
             } catch (Exception e) {
                 System.err.println("ERROR: " + e.getMessage());
